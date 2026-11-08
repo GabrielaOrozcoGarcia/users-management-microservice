@@ -4,18 +4,24 @@ Tablas del ejercicio:
 
 | Tabla | Campos |
 |-------|--------|
-| `users` (Usuario) | id, name (nombre), email (se usa como username), password, role, status |
+| `users` (Usuario) | id, **username**, name (nombre), email, password, role, status |
 | `calificaciones` | id, fecha, estudiante, docente, asignatura, carrera, universidad, periodo, actividad_evaluada, porcentaje, nota |
 
 El script está en `src/main/resources/schema.sql` (ejecútelo completo en TiDB).
+Si ya había creado la tabla `users` sin `username`, ejecute además
+`src/main/resources/migration-001-username.sql`.
 
 ## Endpoints
 
-Todos requieren el header `Authorization: Bearer <accessToken>` (se obtiene con el login).
+Los de calificaciones y usuarios (salvo el registro) requieren el header
+`Authorization: Bearer <accessToken>`, que se obtiene con el login.
 
 | Método | URL | Body |
 |--------|-----|------|
-| POST | `/api/auth/login` (sin token) | `{"email":"admin@example.com","password":"Admin1234!"}` |
+| POST | `/api/auth/login` (sin token) | `{"username":"admin","password":"Admin1234!"}` (también acepta `email`) |
+| POST | `/api/auth/recover` (sin token) | `{"email":"usuario@example.com"}` → envía contraseña temporal con Brevo |
+| POST | `/api/users` (sin token, registro) | `{"username":"gorozco","name":"Gabriela","email":"g@x.com","password":"Clave12345"}` |
+| GET / PUT / DELETE | `/api/users[/{id}]` | solo rol ADMIN (GET también REVIEWER) |
 | GET | `/api/calificaciones` | – |
 | GET | `/api/calificaciones/{id}` | – |
 | POST | `/api/calificaciones` | JSON de abajo |
@@ -42,16 +48,13 @@ Reglas: `fecha` en formato `yyyy-MM-dd`, `porcentaje` entre 0 y 100, `nota` entr
 Respuestas: 200 OK, 201 Created, 204 No Content (DELETE), 400 datos inválidos,
 401 sin token o token vencido (el JWT dura 15 min), 404 id inexistente.
 
-## Consumo desde Kodular (componente Web)
+## App Kodular
 
-1. Login: `Web.Url = <URL-render>/api/auth/login`,
-   `Web.RequestHeaders = [["Content-Type","application/json"]]`,
-   `Web.PostText` con el JSON de email/password.
-   En `Web.GotText` → `Web.JsonTextDecodeWithDictionaries(responseContent)` → guardar `accessToken` en una variable global (o TinyDB).
-2. Resto de peticiones: `Web.RequestHeaders = [["Authorization","Bearer " + token], ["Content-Type","application/json"]]`.
-   - Listar: `Web.Get`
-   - Crear: `Web.PostText(json)`
-   - Editar: `Web.PutText(json)` con Url `.../api/calificaciones/{id}`
-   - Eliminar: `Web.Delete` con Url `.../api/calificaciones/{id}`
-3. En `Web.GotText` revisar `responseCode` (200/201/204 = éxito; 401 = volver a hacer login).
-4. Render plan Free se duerme tras 15 min: la primera petición puede tardar ~50 s; suba `Web.Timeout`.
+`AppCalificaciones_API.aia` ya consume este API (antes usaba Supabase).
+Lo único que hay que cambiar es la variable global `API_URL` en los bloques de **Screen1**
+(poner la URL de Render). Las demás pantallas la leen desde TinyDB.
+
+Flujo: registrarse → el ADMIN entra a "Gestión de Usuarios", selecciona al usuario, marca
+"Usuario activo" y pulsa Actualizar → el usuario ya puede iniciar sesión.
+
+Render plan Free se duerme tras 15 min sin uso: la primera petición puede tardar ~50 s.
