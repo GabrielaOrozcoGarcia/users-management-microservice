@@ -14,7 +14,13 @@ public record UpdateUserCommand(
         String email,
     String password,
     @NotBlank(message = "role must not be blank") String role,
-    @NotBlank(message = "status must not be blank") String status)
+    @NotBlank(message = "status must not be blank") String status,
+    String username)
 {
-
+  /** Constructor compatible: sin username (se conserva el actual). */
+  public UpdateUserCommand(
+      final String id, final String name, final String email, final String password,
+      final String role, final String status) {
+    this(id, name, email, password, role, status, null);
+  }
 }

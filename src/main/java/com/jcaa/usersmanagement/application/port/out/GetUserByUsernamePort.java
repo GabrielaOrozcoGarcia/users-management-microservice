@@ -1,0 +1,9 @@
+package com.jcaa.usersmanagement.application.port.out;
+
+import com.jcaa.usersmanagement.domain.model.UserModel;
+import com.jcaa.usersmanagement.domain.valueobject.UserUsername;
+import java.util.Optional;
+
+public interface GetUserByUsernamePort {
+  Optional<UserModel> getByUsername(UserUsername username);
+}

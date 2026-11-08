@@ -5,5 +5,12 @@ public record UserRestResponse(
     String name,
     String email,
     String role,
-    String status) {}
+    String status,
+    String username) {
 
+  public UserRestResponse(
+      final String id, final String name, final String email, final String role,
+      final String status) {
+    this(id, name, email, role, status, null);
+  }
+}

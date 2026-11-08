@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
   private static final String AUTH_LOGIN_PATH = "/api/auth/login";
+  private static final String AUTH_RECOVER_PATH = "/api/auth/recover";
   private static final String USERS_PATH = "/api/users";
   private static final String USERS_DETAIL_PATH = "/api/users/**";
   private static final String CALIFICACIONES_PATHS = "/api/calificaciones/**";
@@ -44,7 +45,7 @@ public class SecurityConfig {
                 authorization
                     .requestMatchers(HttpMethod.GET, "/health")
                     .permitAll()
-                    .requestMatchers(AUTH_LOGIN_PATH)
+                    .requestMatchers(AUTH_LOGIN_PATH, AUTH_RECOVER_PATH)
                     .permitAll()
                     .requestMatchers(OPEN_API_PATHS)
                     .permitAll()

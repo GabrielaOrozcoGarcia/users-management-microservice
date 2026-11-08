@@ -45,7 +45,9 @@ class LoginServiceTest {
   @BeforeEach
   void setUp() {
     try (final ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
-      service = new LoginService(getUserByEmailPort, validatorFactory.getValidator());
+      service = new LoginService(
+          getUserByEmailPort, validatorFactory.getValidator(),
+          org.mockito.Mockito.mock(com.jcaa.usersmanagement.application.port.out.GetUserByUsernamePort.class));
     }
   }
 

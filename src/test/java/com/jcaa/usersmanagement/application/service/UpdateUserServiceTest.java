@@ -60,7 +60,8 @@ class UpdateUserServiceTest {
               getUserByIdPort,
               getUserByEmailPort,
               emailNotificationService,
-              validatorFactory.getValidator());
+              validatorFactory.getValidator(),
+              org.mockito.Mockito.mock(com.jcaa.usersmanagement.application.port.out.GetUserByUsernamePort.class));
     }
 
     existingUser =

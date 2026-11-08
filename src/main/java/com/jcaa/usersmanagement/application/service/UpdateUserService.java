@@ -3,6 +3,7 @@ package com.jcaa.usersmanagement.application.service;
 import com.jcaa.usersmanagement.application.port.in.UpdateUserUseCase;
 import com.jcaa.usersmanagement.application.port.out.GetUserByEmailPort;
 import com.jcaa.usersmanagement.application.port.out.GetUserByIdPort;
+import com.jcaa.usersmanagement.application.port.out.GetUserByUsernamePort;
 import com.jcaa.usersmanagement.application.port.out.UpdateUserPort;
 import com.jcaa.usersmanagement.application.service.dto.command.UpdateUserCommand;
 import com.jcaa.usersmanagement.application.service.mapper.UserApplicationMapper;
@@ -28,6 +29,7 @@ public class UpdateUserService implements UpdateUserUseCase {
   private final GetUserByEmailPort getUserByEmailPort;
   private final EmailNotificationService emailNotificationService;
   private final Validator validator;
+  private final GetUserByUsernamePort getUserByUsernamePort;
 
   @Override
   public UserModel execute(final UpdateUserCommand command) {
@@ -40,7 +42,9 @@ public class UpdateUserService implements UpdateUserUseCase {
     ensureEmailIsNotTakenByAnotherUser(newEmail, userId);
 
     final UserModel userToUpdate =
-        UserApplicationMapper.fromUpdateCommandToModel(command, current.getPassword());
+        UserApplicationMapper.fromUpdateCommandToModel(
+            command, current.getPassword(), current.getUsername());
+    ensureUsernameIsNotTakenByAnotherUser(userToUpdate, userId);
     final UserModel updatedUser = updateUserPort.update(userToUpdate);
 
     emailNotificationService.notifyUserUpdated(updatedUser);
@@ -59,6 +63,18 @@ public class UpdateUserService implements UpdateUserUseCase {
     return getUserByIdPort
         .getById(userId)
         .orElseThrow(() -> UserNotFoundException.becauseIdWasNotFound(userId.value()));
+  }
+
+  private void ensureUsernameIsNotTakenByAnotherUser(
+      final UserModel user, final UserId ownerId) {
+    getUserByUsernamePort
+        .getByUsername(user.getUsername())
+        .filter(found -> !found.getId().equals(ownerId))
+        .ifPresent(
+            found -> {
+              throw UserAlreadyExistsException.becauseUsernameAlreadyExists(
+                  user.getUsername().value());
+            });
   }
 
   private void ensureEmailIsNotTakenByAnotherUser(final UserEmail newEmail, final UserId ownerId) {

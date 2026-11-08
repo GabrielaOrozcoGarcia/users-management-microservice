@@ -2,6 +2,7 @@ package com.jcaa.usersmanagement.application.service;
 
 import com.jcaa.usersmanagement.application.port.in.CreateUserUseCase;
 import com.jcaa.usersmanagement.application.port.out.GetUserByEmailPort;
+import com.jcaa.usersmanagement.application.port.out.GetUserByUsernamePort;
 import com.jcaa.usersmanagement.application.port.out.SaveUserPort;
 import com.jcaa.usersmanagement.application.service.dto.command.CreateUserCommand;
 import com.jcaa.usersmanagement.application.service.mapper.UserApplicationMapper;
@@ -26,6 +27,7 @@ public class CreateUserService implements CreateUserUseCase {
   private final GetUserByEmailPort getUserByEmailPort;
   private final EmailNotificationService emailNotificationService;
   private final Validator validator;
+  private final GetUserByUsernamePort getUserByUsernamePort;
 
   @Override
   public UserModel execute(final CreateUserCommand command) {
@@ -35,6 +37,7 @@ public class CreateUserService implements CreateUserUseCase {
     ensureEmailIsNotTaken(email);
 
     final UserModel userToSave = UserApplicationMapper.fromCreateCommandToModel(command);
+    ensureUsernameIsNotTaken(userToSave);
     final UserModel savedUser = saveUserPort.save(userToSave);
 
     emailNotificationService.notifyUserCreated(savedUser, command.password());
@@ -47,6 +50,16 @@ public class CreateUserService implements CreateUserUseCase {
     if (!violations.isEmpty()) {
       throw new ConstraintViolationException(violations);
     }
+  }
+
+  private void ensureUsernameIsNotTaken(final UserModel user) {
+    getUserByUsernamePort
+        .getByUsername(user.getUsername())
+        .ifPresent(
+            ignored -> {
+              throw UserAlreadyExistsException.becauseUsernameAlreadyExists(
+                  user.getUsername().value());
+            });
   }
 
   private void ensureEmailIsNotTaken(final UserEmail email) {

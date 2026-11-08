@@ -38,7 +38,10 @@ class AuthRestControllerTest {
     when(loginUseCase.execute(command)).thenReturn(user);
     when(jwtTokenService.generate(user)).thenReturn("signed.jwt.token");
     when(jwtTokenService.expirationSeconds()).thenReturn(900L);
-    final AuthRestController controller = new AuthRestController(loginUseCase, jwtTokenService);
+    final AuthRestController controller = new AuthRestController(
+        loginUseCase, jwtTokenService,
+        org.mockito.Mockito.mock(
+            com.jcaa.usersmanagement.application.port.in.RecoverPasswordUseCase.class));
 
     // Act
     final LoginRestResponse response =

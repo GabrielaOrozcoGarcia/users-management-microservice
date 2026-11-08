@@ -7,6 +7,7 @@ import com.jcaa.usersmanagement.domain.valueobject.UserEmail;
 import com.jcaa.usersmanagement.domain.valueobject.UserId;
 import com.jcaa.usersmanagement.domain.valueobject.UserName;
 import com.jcaa.usersmanagement.domain.valueobject.UserPassword;
+import com.jcaa.usersmanagement.domain.valueobject.UserUsername;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.dto.UserPersistenceDto;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.entity.UserEntity;
 import lombok.experimental.UtilityClass;
@@ -28,7 +29,8 @@ public class UserPersistenceMapper {
         user.getRole().name(),
         user.getStatus().name(),
         null,
-        null);
+        null,
+        user.getUsername().value());
   }
 
   public UserEntity fromResultSetToEntity(final ResultSet resultSet) throws SQLException {
@@ -40,17 +42,20 @@ public class UserPersistenceMapper {
         resultSet.getString("role"),
         resultSet.getString("status"),
         resultSet.getString("created_at"),
-        resultSet.getString("updated_at"));
+        resultSet.getString("updated_at"),
+        resultSet.getString("username"));
   }
 
   public UserModel fromEntityToModel(final UserEntity entity) {
+    final UserEmail email = new UserEmail(entity.email());
     return new UserModel(
         new UserId(entity.id()),
         new UserName(entity.name()),
-        new UserEmail(entity.email()),
+        email,
         UserPassword.fromHash(entity.password()),
         UserRole.fromString(entity.role()),
-        UserStatus.fromString(entity.status()));
+        UserStatus.fromString(entity.status()),
+        UserUsername.ofNullable(entity.username(), email));
   }
 
   public UserModel fromResultSetToModel(final ResultSet resultSet) throws SQLException {

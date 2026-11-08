@@ -11,6 +11,7 @@ import com.jcaa.usersmanagement.domain.valueobject.UserEmail;
 import com.jcaa.usersmanagement.domain.valueobject.UserId;
 import com.jcaa.usersmanagement.domain.valueobject.UserName;
 import com.jcaa.usersmanagement.domain.valueobject.UserPassword;
+import com.jcaa.usersmanagement.domain.valueobject.UserUsername;
 import java.util.Objects;
 import lombok.experimental.UtilityClass;
 
@@ -18,16 +19,26 @@ import lombok.experimental.UtilityClass;
 public class UserApplicationMapper {
 
   public UserModel fromCreateCommandToModel(final CreateUserCommand command) {
+    final UserEmail email = new UserEmail(command.email());
     return UserModel.create(
         new UserId(command.id()),
+        UserUsername.ofNullable(command.username(), email),
         new UserName(command.name()),
-        new UserEmail(command.email()),
+        email,
         UserPassword.fromPlainText(command.password()),
         UserRole.fromString(command.role()));
   }
 
   public UserModel fromUpdateCommandToModel(
       final UpdateUserCommand command, final UserPassword currentPassword) {
+    return fromUpdateCommandToModel(command, currentPassword, null);
+  }
+
+  /** Actualiza conservando el username actual cuando el comando no trae uno. */
+  public UserModel fromUpdateCommandToModel(
+      final UpdateUserCommand command,
+      final UserPassword currentPassword,
+      final UserUsername currentUsername) {
 
     final UserPassword passwordToUse = resolvePassword(command.password(), currentPassword);
 
@@ -37,7 +48,18 @@ public class UserApplicationMapper {
         new UserEmail(command.email()),
         passwordToUse,
         UserRole.fromString(command.role()),
-        UserStatus.fromString(command.status()));
+        UserStatus.fromString(command.status()),
+        resolveUsername(command, currentUsername));
+  }
+
+  private UserUsername resolveUsername(
+      final UpdateUserCommand command, final UserUsername currentUsername) {
+    if (Objects.nonNull(command.username()) && !command.username().isBlank()) {
+      return new UserUsername(command.username());
+    }
+    return Objects.nonNull(currentUsername)
+        ? currentUsername
+        : UserUsername.fromEmail(new UserEmail(command.email()));
   }
 
   public UserId fromGetUserByIdQueryToUserId(final GetUserByIdQuery query) {

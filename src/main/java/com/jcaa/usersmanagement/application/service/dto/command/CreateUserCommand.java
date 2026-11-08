@@ -15,7 +15,13 @@ public record CreateUserCommand(
     @NotBlank(message = "password must not be blank")
         @Size(min = 8, message = "password must have at least 8 characters")
         String password,
-    @NotBlank(message = "role must not be blank") String role)
+    @NotBlank(message = "role must not be blank") String role,
+    String username)
 {
-
+  /** Constructor compatible: sin username (se deriva del email). */
+  public CreateUserCommand(
+      final String id, final String name, final String email, final String password,
+      final String role) {
+    this(id, name, email, password, role, null);
+  }
 }
